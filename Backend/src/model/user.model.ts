@@ -1,30 +1,50 @@
 import mongoose from "mongoose";
 
-const userSchema = new mongoose.Schema({
-  name: {
-    type: String,
-    required: true,
-    minimum: [2, "Name atleast 2 charater long"],
-    maximum: 40,
-  },
-  username: {
-    type: String,
-    unique: true,
-    required: true,
-    minimum: [2, "Name atleast 2 charater long"],
-    maximum: 40,
-  },
-  playlist: [
-    {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Playlist",
-    },
-  ],
-  like: [
-    {
+// User Schema
+const UserSchema = new mongoose.Schema(
+  {
+    name: {
       type: String,
-      validate:
-        /^(https:\/\/open.spotify.com\/user\/spotify\/playlist\/|spotify:user:spotify:playlist:)([a-zA-Z0-9]+)(.*)$/gm, 
+      required: true,
     },
-  ],
-});
+    username: {
+      type: String,
+      unique: true,
+      required: true,
+    },
+    password: {
+      type: String,
+    }, // Only required if not using Google Auth
+    google_id: {
+      type: String,
+    }, // Optional, only if using Google Auth
+    email: {
+      type: String,
+      unique: true,
+      required: true,
+    }, // Optional: if you want to store email
+    profile_picture: {
+      type: String,
+    }, // URL to the user's profile picture
+    playlists: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Playlist",
+      },
+    ], // Reference to playlists
+    liked_songs: [
+      {
+        type: String,
+      },
+    ], // Array of song URLs or song IDs from Spotify API
+    parties: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Party",
+      },
+    ], // Reference to parties the user has joined
+  },
+  { timestamps: true }
+);
+
+export default mongoose.model("User", UserSchema);

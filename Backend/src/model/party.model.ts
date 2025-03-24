@@ -52,4 +52,4 @@ const PartySchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-module.exports = mongoose.model("Party", PartySchema);
+export default mongoose.model("Party", PartySchema);
