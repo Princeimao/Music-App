@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import songModel from "./song.model";
 
 const PartySchema = new mongoose.Schema(
   {
@@ -24,11 +25,7 @@ const PartySchema = new mongoose.Schema(
         ref: "User",
       },
     ],
-    current_queue: [
-      {
-        type: String,
-      },
-    ],
+    queue: [songModel],
     votes: [
       {
         song_id: { type: String, required: true },
