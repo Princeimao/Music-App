@@ -1,7 +1,20 @@
-import mongoose from "mongoose";
+import mongoose, { Document } from "mongoose";
 
-// User Schema
-const UserSchema = new mongoose.Schema(
+interface IUser extends Document {
+  _id: mongoose.Schema.Types.ObjectId;
+  name: string;
+  username: string;
+  google_id: string;
+  email: string;
+  profile_picture: string;
+  playlists: mongoose.Schema.Types.ObjectId[];
+  liked_songs: string[];
+  parties: mongoose.Schema.Types.ObjectId[];
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+const UserSchema = new mongoose.Schema<IUser>(
   {
     name: {
       type: String,
@@ -12,11 +25,10 @@ const UserSchema = new mongoose.Schema(
       unique: true,
       required: true,
     },
-    password: {
-      type: String,
-    }, // Only required if not using Google Auth
     google_id: {
       type: String,
+      required: true,
+      unique: true,
     }, // Optional, only if using Google Auth
     email: {
       type: String,
@@ -47,4 +59,4 @@ const UserSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-export default mongoose.model("User", UserSchema);
+export default mongoose.model<IUser>("User", UserSchema);
