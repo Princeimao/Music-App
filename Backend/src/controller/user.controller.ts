@@ -1,8 +1,10 @@
 import axios from "axios";
 import { Request, Response } from "express";
 import jwt from "jsonwebtoken";
+import querystring from "querystring";
 import userModel from "../model/user.model";
 import { client } from "../utils/google.utils";
+import { generateRandomString } from "../utils/helper";
 
 declare module "express-session" {
   interface SessionData {
@@ -28,9 +30,6 @@ export const googleAuthHandler = async (req: Request, res: Response) => {
 
     const payload = ticket.getPayload();
 
-    // Google response to check what will come in the response
-    console.log("googleResponse ", payload);
-
     const {
       email,
       name,
@@ -44,6 +43,9 @@ export const googleAuthHandler = async (req: Request, res: Response) => {
     };
 
     const user = await userModel.findOne({ google_id: googleId });
+    const scope =
+      "user-read-private user-read-email user-modify-playback-state playlist-modify-public";
+    const state = generateRandomString(16);
 
     if (!user) {
       return res.json({
@@ -52,13 +54,15 @@ export const googleAuthHandler = async (req: Request, res: Response) => {
         email,
         name,
         profilePic: picture,
-        spotifyAuthUrl: `https://accounts.spotify.com/authorize?client_id=${
-          process.env.SPOTIFY_CLIENT_ID
-        }&response_type=code&redirect_uri=${
-          process.env.BACKEND_URL
-        }/auth/spotify&scope=${encodeURIComponent(
-          "user-read-private user-read-email user-modify-playback-state playlist-modify-public"
-        )}`,
+        spotifyAuthUrl:
+          "https://accounts.spotify.com/authorize?" +
+          querystring.stringify({
+            response_type: "code",
+            client_id: process.env.SPOTIFY_CLIENT_ID,
+            scope,
+            redirect_uri: process.env.REDIRECT_URL,
+            state,
+          }),
       });
     }
 
@@ -109,10 +113,15 @@ export const googleAuthHandler = async (req: Request, res: Response) => {
   }
 };
 
+// TODO: While authenticating i did not checking the state this will help to check is there is some cross site attack
 export const spotifyAuthorization = async (req: Request, res: Response) => {
   try {
-    const code = req.query.code as string;
-
+    console.log("i am here ");
+    const { code, state } = req.query as {
+      code: string;
+      state: string;
+    };
+    console.log(code, state);
     if (
       !process.env.BACKEND_URL ||
       !process.env.SPOTIFY_CLIENT_ID ||

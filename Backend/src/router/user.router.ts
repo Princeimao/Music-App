@@ -8,6 +8,6 @@ const router = express.Router();
 
 // @ts-ignore
 router.route("/register").post(googleAuthHandler);
-router.route("/spotify").post(spotifyAuthorization);
+router.route("/spotify").get(spotifyAuthorization);
 
 export default router;
