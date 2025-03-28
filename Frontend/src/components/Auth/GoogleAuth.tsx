@@ -1,7 +1,4 @@
-import {
-  handleLoginError,
-  handleLoginSuccess,
-} from "@/apis/authentication.api";
+import { sendTokenToBackend } from "@/apis/authentication.api";
 import { GoogleLogin, GoogleOAuthProvider } from "@react-oauth/google";
 
 const GoogleAuth = () => {
@@ -17,7 +14,24 @@ const GoogleAuth = () => {
         Login with Google
       </Button> */}
 
-      <GoogleLogin onSuccess={handleLoginSuccess} onError={handleLoginError} />
+      <GoogleLogin
+        onSuccess={async (credentialResponse) => {
+          try {
+            console.log(credentialResponse);
+
+            if (!credentialResponse.credential) {
+              return {
+                success: false,
+                message: "something went wrong while authenticating",
+              };
+            }
+
+            await sendTokenToBackend(credentialResponse.credential);
+          } catch (error) {
+            console.log("something went wrong while authenticating ", error);
+          }
+        }}
+      />
     </GoogleOAuthProvider>
   );
 };
