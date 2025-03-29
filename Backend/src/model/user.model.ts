@@ -10,6 +10,8 @@ interface IUser extends Document {
   playlists: mongoose.Schema.Types.ObjectId[];
   liked_songs: string[];
   parties: mongoose.Schema.Types.ObjectId[];
+  spotify_refresh_token: string;
+  spotify_access_token: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -55,6 +57,12 @@ const UserSchema = new mongoose.Schema<IUser>(
         ref: "Party",
       },
     ], // Reference to parties the user has joined
+    spotify_refresh_token: {
+      type: String,
+    },
+    spotify_access_token: {
+      type: String,
+    },
   },
   { timestamps: true }
 );

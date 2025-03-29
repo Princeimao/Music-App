@@ -14,8 +14,6 @@ declare module "express-session" {
       name: string;
       profilePic: string;
     };
-    spotifyAccessToken?: string;
-    spotifyRefreshToken?: string;
   }
 }
 
@@ -42,13 +40,22 @@ export const googleAuthHandler = async (req: Request, res: Response) => {
       sub: string;
     };
 
+    console.log(email, name, googleId, picture);
+
+    req.session.user = {
+      googleId,
+      email,
+      name,
+      profilePic: picture,
+    };
+
     const user = await userModel.findOne({ google_id: googleId });
     const scope =
       "user-read-private user-read-email user-modify-playback-state playlist-modify-public";
     const state = generateRandomString(16);
 
     if (!user) {
-      return res.json({
+      res.json({
         isNewUser: true,
         googleId,
         email,
@@ -64,21 +71,16 @@ export const googleAuthHandler = async (req: Request, res: Response) => {
             state,
           }),
       });
+      return;
     }
 
     if (!process.env.JWT_SECRET) {
-      return res.status(500).json({
+      res.status(500).json({
         success: false,
         error: "Server configuration error: JWT_SECRET is missing",
       });
+      return;
     }
-
-    req.session.user = {
-      googleId,
-      email,
-      name,
-      profilePic: picture,
-    };
 
     const authToken = await jwt.sign(
       {
@@ -95,7 +97,7 @@ export const googleAuthHandler = async (req: Request, res: Response) => {
       httpOnly: true,
     });
 
-    return res.status(200).json({
+    res.status(200).json({
       success: true,
       message: "user logged in successfully",
       user: {
@@ -106,10 +108,11 @@ export const googleAuthHandler = async (req: Request, res: Response) => {
     });
   } catch (error) {
     console.log("something went wrong while creating an user", error);
-    return res.status(401).json({
+    res.status(401).json({
       error: "Invalid Google Token",
       success: false,
     });
+    return;
   }
 };
 
@@ -117,17 +120,29 @@ export const googleAuthHandler = async (req: Request, res: Response) => {
 export const spotifyAuthorization = async (req: Request, res: Response) => {
   try {
     console.log("i am here ");
+    // The code is short time authorization code which give me access token and refresh token in exchange
     const { code, state } = req.query as {
       code: string;
       state: string;
     };
-    console.log(code, state);
+
     if (
-      !process.env.BACKEND_URL ||
+      !process.env.FRONTEND_URL ||
       !process.env.SPOTIFY_CLIENT_ID ||
       !process.env.SPOTIFY_CLIENT_SECRET
     ) {
       return;
+    }
+
+    if (!code) {
+      res.status(400).json({
+        error: "Authorization code not found",
+      });
+      return;
+    }
+
+    if (!req.session) {
+      return req.session;
     }
 
     const tokenRes = await axios.post(
@@ -135,25 +150,33 @@ export const spotifyAuthorization = async (req: Request, res: Response) => {
       new URLSearchParams({
         grant_type: "authorization_code",
         code,
-        redirect_uri: process.env.BACKEND_URL + "/auth/spotify",
-        client_id: process.env.SPOTIFY_CLIENT_ID,
-        client_secret: process.env.SPOTIFY_CLIENT_SECRET,
+        redirect_uri: "http://localhost:3000/api/user/spotify",
       }),
-      { headers: { "Content-Type": "application/x-www-form-urlencoded" } }
+      {
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+          Authorization:
+            "Basic " +
+            Buffer.from(
+              process.env.SPOTIFY_CLIENT_ID +
+                ":" +
+                process.env.SPOTIFY_CLIENT_SECRET
+            ).toString("base64"),
+        },
+      }
     );
 
-    // checking what inside the token
-    console.log(tokenRes);
+    console.log("req.session", req.session);
 
-    const { access_token, refresh_token, expires_in } = tokenRes.data;
+    const { access_token, refresh_token } = tokenRes.data;
 
     let user = await userModel.create({
       googleId: req.session.user!.googleId,
       email: req.session.user!.email,
       name: req.session.user!.name,
       profilePic: req.session.user!.profilePic,
-      spotifyAccessToken: access_token,
-      spotifyRefreshToken: refresh_token,
+      spotify_access_token: access_token,
+      spotify_refresh_token: refresh_token,
     });
 
     if (!process.env.JWT_SECRET) {
@@ -171,8 +194,15 @@ export const spotifyAuthorization = async (req: Request, res: Response) => {
       }
     );
 
-    res.json({ accessToken: authToken, user });
+    res.status(200).json({
+      accessToken: authToken,
+      user,
+    });
   } catch (error) {
     console.log("something went wrong while authorize from spotfiy", error);
+    res.status(400).json({
+      success: false,
+      message: "Internal Server Error",
+    });
   }
 };
