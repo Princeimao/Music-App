@@ -17,9 +17,7 @@ const Layout = () => {
   return (
     <main className="bg-[#181818] w-full h-screen">
       {isMobile ? <Bottombar /> : <Topbar />}
-      <div className="w-full h-[76%] px-2">
-        <Sidebar />
-      </div>
+      <div className="w-full h-[76%] px-2">{isMobile ? null : <Sidebar />}</div>
       <div className="w-full h-[14vh] bg-[#181818]"></div>
     </main>
   );
