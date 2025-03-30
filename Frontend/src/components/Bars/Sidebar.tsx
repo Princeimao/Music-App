@@ -1,4 +1,5 @@
 import { LibraryBig, Plus } from "lucide-react";
+import SmallCard from "../cards/SmallCard";
 
 const Sidebar = () => {
   return (
@@ -12,6 +13,7 @@ const Sidebar = () => {
           <Plus color="white" />
         </div>
       </div>
+      <SmallCard />
     </div>
   );
 };
