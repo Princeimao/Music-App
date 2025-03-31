@@ -10,7 +10,7 @@ import { Link } from "react-router-dom";
 
 import GoogleAuth from "../Auth/GoogleAuth";
 
-export function LoginForm({
+export function RegisterForm({
   className,
   ...props
 }: React.ComponentPropsWithoutRef<"div">) {
@@ -18,7 +18,7 @@ export function LoginForm({
     <div className={cn("flex flex-col gap-6", className)} {...props}>
       <Card>
         <CardHeader className="text-center">
-          <CardTitle className="text-xl">Welcome back</CardTitle>
+          <CardTitle className="text-xl">Register Now</CardTitle>
           <CardDescription>Login with your Google account</CardDescription>
         </CardHeader>
         <CardContent>
@@ -33,9 +33,9 @@ export function LoginForm({
             </div>
 
             <div className="text-center text-sm">
-              Don&apos;t have an account?{" "}
-              <Link to="/register" className="underline underline-offset-4">
-                Sign up
+              Already have an account?{" "}
+              <Link to="/login" className="underline underline-offset-4">
+                Sign in
               </Link>
             </div>
           </div>

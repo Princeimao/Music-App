@@ -1,6 +1,6 @@
 const SmallCard = () => {
   return (
-    <div className="group w-full h-18 rounded-md flex items-center px-1.5 py-1.5 hover:bg-[#49494962] gap-2.5">
+    <div className="group w-full h-18 rounded-md flex items-center px-2 py-1.5 hover:bg-[#49494962] gap-2.5">
       <div className="w-13 h-13 bg-black rounded"></div>
 
       <div>
