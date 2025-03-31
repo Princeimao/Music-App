@@ -2,19 +2,17 @@ import axios from "axios";
 import { Request, Response } from "express";
 import jwt from "jsonwebtoken";
 import querystring from "querystring";
+
 import userModel from "../model/user.model";
 import { client } from "../utils/google.utils";
 import { generateRandomString } from "../utils/helper";
+import { redisClient } from "../utils/redis.client";
 
-declare module "express-session" {
-  interface SessionData {
-    user?: {
-      googleId: string;
-      email: string;
-      name: string;
-      profilePic: string;
-    };
-  }
+interface IRedisData {
+  googleId: string;
+  email: string;
+  picturePic: string;
+  name: string;
 }
 
 export const googleAuthHandler = async (req: Request, res: Response) => {
@@ -40,19 +38,19 @@ export const googleAuthHandler = async (req: Request, res: Response) => {
       sub: string;
     };
 
-    console.log(email, name, googleId, picture);
-
-    req.session.user = {
-      googleId,
-      email,
-      name,
-      profilePic: picture,
-    };
-
     const user = await userModel.findOne({ google_id: googleId });
     const scope =
       "user-read-private user-read-email user-modify-playback-state playlist-modify-public";
     const state = generateRandomString(16);
+
+    const data = JSON.stringify({
+      googleId,
+      email,
+      picturePic: picture,
+      name,
+    });
+
+    redisClient.set(state, data);
 
     if (!user) {
       res.json({
@@ -73,39 +71,6 @@ export const googleAuthHandler = async (req: Request, res: Response) => {
       });
       return;
     }
-
-    if (!process.env.JWT_SECRET) {
-      res.status(500).json({
-        success: false,
-        error: "Server configuration error: JWT_SECRET is missing",
-      });
-      return;
-    }
-
-    const authToken = await jwt.sign(
-      {
-        userId: user._id,
-        email: user.email,
-      },
-      process.env.JWT_SECRET,
-      {
-        expiresIn: "1h",
-      }
-    );
-
-    res.cookie("token", authToken, {
-      httpOnly: true,
-    });
-
-    res.status(200).json({
-      success: true,
-      message: "user logged in successfully",
-      user: {
-        name: user.name,
-        username: user.username,
-        email: user.email,
-      },
-    });
   } catch (error) {
     console.log("something went wrong while creating an user", error);
     res.status(401).json({
@@ -119,7 +84,6 @@ export const googleAuthHandler = async (req: Request, res: Response) => {
 // TODO: While authenticating i did not checking the state this will help to check is there is some cross site attack
 export const spotifyAuthorization = async (req: Request, res: Response) => {
   try {
-    console.log("i am here ");
     // The code is short time authorization code which give me access token and refresh token in exchange
     const { code, state } = req.query as {
       code: string;
@@ -139,10 +103,6 @@ export const spotifyAuthorization = async (req: Request, res: Response) => {
         error: "Authorization code not found",
       });
       return;
-    }
-
-    if (!req.session) {
-      return req.session;
     }
 
     const tokenRes = await axios.post(
@@ -166,15 +126,23 @@ export const spotifyAuthorization = async (req: Request, res: Response) => {
       }
     );
 
-    console.log("req.session", req.session);
+    //@ts-ignore
+    const data: IRedisData = JSON.parse(await redisClient.get(state));
+
+    if (!data) {
+      res.status(500).json({
+        success: false,
+        message: "something went wrong while getting the data from redis",
+      });
+    }
 
     const { access_token, refresh_token } = tokenRes.data;
 
     let user = await userModel.create({
-      googleId: req.session.user!.googleId,
-      email: req.session.user!.email,
-      name: req.session.user!.name,
-      profilePic: req.session.user!.profilePic,
+      google_id: data.googleId,
+      email: data.email,
+      name: data.name,
+      profile_picture: data.picturePic || "",
       spotify_access_token: access_token,
       spotify_refresh_token: refresh_token,
     });
@@ -196,7 +164,12 @@ export const spotifyAuthorization = async (req: Request, res: Response) => {
 
     res.status(200).json({
       accessToken: authToken,
-      user,
+      user: {
+        name: user.name,
+        email: user.email,
+        profilePic: user.profile_picture,
+      },
+      message: "user created successfully",
     });
   } catch (error) {
     console.log("something went wrong while authorize from spotfiy", error);

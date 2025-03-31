@@ -3,7 +3,6 @@ import mongoose, { Document } from "mongoose";
 interface IUser extends Document {
   _id: mongoose.Schema.Types.ObjectId;
   name: string;
-  username: string;
   google_id: string;
   email: string;
   profile_picture: string;
@@ -20,11 +19,6 @@ const UserSchema = new mongoose.Schema<IUser>(
   {
     name: {
       type: String,
-      required: true,
-    },
-    username: {
-      type: String,
-      unique: true,
       required: true,
     },
     google_id: {
