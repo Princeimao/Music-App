@@ -3,6 +3,7 @@ import { Request, Response } from "express";
 import jwt from "jsonwebtoken";
 import querystring from "querystring";
 
+import { IUserRequest } from "../middlewares/auth.middleware";
 import userModel from "../model/user.model";
 import { client } from "../utils/google.utils";
 import { generateRandomString } from "../utils/helper";
@@ -38,21 +39,25 @@ export const googleAuthHandler = async (req: Request, res: Response) => {
       sub: string;
     };
 
-    const user = await userModel.findOne({ google_id: googleId });
+    const user = await userModel.findOne({ email: email });
+
     const scope =
       "user-read-private user-read-email user-modify-playback-state playlist-modify-public";
     const state = generateRandomString(16);
 
-    const data = JSON.stringify({
-      googleId,
-      email,
-      picturePic: picture,
-      name,
-    });
-
-    redisClient.set(state, data);
+    console.log("i am here");
 
     if (!user) {
+      console.log("i am inside");
+      const data = JSON.stringify({
+        googleId,
+        email,
+        picturePic: picture,
+        name,
+      });
+
+      await redisClient.set(state, data);
+
       res.json({
         isNewUser: true,
         googleId,
@@ -71,6 +76,31 @@ export const googleAuthHandler = async (req: Request, res: Response) => {
       });
       return;
     }
+
+    if (!process.env.JWT_SECRET) {
+      return;
+    }
+    const authToken = await jwt.sign(
+      {
+        userId: user?._id,
+        email: user?.email,
+      },
+      process.env.JWT_SECRET,
+      {
+        expiresIn: "1h",
+      }
+    );
+
+    res.status(200).json({
+      success: true,
+      message: "Login Successfully",
+      user: {
+        name: user.name,
+        email: user.email,
+        profilePic: user.profile_picture,
+      },
+      token: authToken,
+    });
   } catch (error) {
     console.log("something went wrong while creating an user", error);
     res.status(401).json({
@@ -162,20 +192,57 @@ export const spotifyAuthorization = async (req: Request, res: Response) => {
       }
     );
 
-    res.status(200).json({
-      accessToken: authToken,
-      user: {
-        name: user.name,
-        email: user.email,
-        profilePic: user.profile_picture,
-      },
-      message: "user created successfully",
-    });
+    res.status(200).redirect(process.env.FRONTEND_URL);
   } catch (error) {
     console.log("something went wrong while authorize from spotfiy", error);
     res.status(400).json({
       success: false,
       message: "Internal Server Error",
     });
+  }
+};
+
+export const getUser = async (req: IUserRequest, res: Response) => {
+  try {
+    const userId = req.user?.userId;
+
+    const cachedUser = await redisClient.get(`user:${userId}`);
+
+    if (cachedUser) {
+      res.status(200).json({
+        success: true,
+        message: "successfully",
+        user: JSON.parse(cachedUser),
+      });
+    }
+
+    const user = await userModel
+      .findById(userId)
+      .select(
+        "name email profile_picture playlists liked_songs parties access_token"
+      )
+      .populate("playlists")
+      .populate("liked_songs")
+      .populate("parties");
+
+    console.log(user);
+
+    if (!user) {
+      res.status(400).json({
+        success: false,
+        message: "User not found",
+      });
+      return;
+    }
+
+    await redisClient.set(`user:${userId}`, JSON.stringify(user));
+
+    res.status(200).json({
+      success: true,
+      message: "successfully",
+      user,
+    });
+  } catch (error) {
+    console.log("something went wrong getting user", error);
   }
 };
