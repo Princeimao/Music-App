@@ -9,7 +9,7 @@ import { client } from "../utils/google.utils";
 import { generateRandomString } from "../utils/helper";
 import { redisClient } from "../utils/redis.client";
 
-interface IRedisData {
+export interface IRedisData {
   googleId: string;
   email: string;
   picturePic: string;
