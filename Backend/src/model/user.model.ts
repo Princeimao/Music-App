@@ -25,15 +25,15 @@ const UserSchema = new mongoose.Schema<IUser>(
       type: String,
       required: true,
       unique: true,
-    }, // Optional, only if using Google Auth
+    },
     email: {
       type: String,
       unique: true,
       required: true,
-    }, // Optional: if you want to store email
+    },
     profile_picture: {
       type: String,
-    }, // URL to the user's profile picture
+    },
     playlists: [
       {
         type: mongoose.Schema.Types.ObjectId,

@@ -13,12 +13,11 @@ const PartySchema = new mongoose.Schema(
         ref: "User",
       },
     ],
-    admins: [
-      {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "User",
-      },
-    ],
+    admins: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+    },
+
     co_admins: [
       {
         type: mongoose.Schema.Types.ObjectId,
@@ -26,16 +25,6 @@ const PartySchema = new mongoose.Schema(
       },
     ],
     queue: [songModel],
-    votes: [
-      {
-        song_id: { type: String, required: true },
-        votes: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
-      },
-    ],
-    created_at: {
-      type: Date,
-      default: Date.now,
-    },
     created_by: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
