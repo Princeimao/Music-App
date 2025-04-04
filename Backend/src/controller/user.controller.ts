@@ -6,7 +6,11 @@ import querystring from "querystring";
 import { IUserRequest } from "../middlewares/auth.middleware";
 import userModel from "../model/user.model";
 import { client } from "../utils/google.utils";
-import { generateRandomString } from "../utils/helper";
+import {
+  currentUserPlaylist,
+  generateRandomString,
+  pushPlaylistToDatabase,
+} from "../utils/helper";
 import { redisClient } from "../utils/redis.client";
 
 export interface IRedisData {
@@ -45,10 +49,7 @@ export const googleAuthHandler = async (req: Request, res: Response) => {
       "user-read-private user-read-email user-modify-playback-state playlist-modify-public";
     const state = generateRandomString(16);
 
-    console.log("i am here");
-
     if (!user) {
-      console.log("i am inside");
       const data = JSON.stringify({
         googleId,
         email,
@@ -168,7 +169,7 @@ export const spotifyAuthorization = async (req: Request, res: Response) => {
 
     const { access_token, refresh_token } = tokenRes.data;
 
-    let user = await userModel.create({
+    const user = await userModel.create({
       google_id: data.googleId,
       email: data.email,
       name: data.name,
@@ -176,6 +177,8 @@ export const spotifyAuthorization = async (req: Request, res: Response) => {
       spotify_access_token: access_token,
       spotify_refresh_token: refresh_token,
     });
+
+    pushPlaylistToDatabase(user._id, access_token);
 
     if (!process.env.JWT_SECRET) {
       throw new Error("JWT_SECRET is not defined");
@@ -192,7 +195,12 @@ export const spotifyAuthorization = async (req: Request, res: Response) => {
       }
     );
 
-    res.status(200).redirect(process.env.FRONTEND_URL);
+    await redisClient.del(state);
+
+    res.status(200).json({
+      message: "created user",
+      jwt: authToken,
+    });
   } catch (error) {
     console.log("something went wrong while authorize from spotfiy", error);
     res.status(400).json({
@@ -244,5 +252,21 @@ export const getUser = async (req: IUserRequest, res: Response) => {
     });
   } catch (error) {
     console.log("something went wrong getting user", error);
+  }
+};
+
+export const getPlaylist = async (req: IUserRequest, res: Response) => {
+  try {
+    const userId = req.user?.userId;
+    const user = await userModel.findById(userId);
+
+    if (!user) {
+      throw new Error("user not found");
+    }
+    const response = await currentUserPlaylist(user?.spotify_access_token);
+
+    res.status(200).json(response);
+  } catch (error) {
+    console.log("something went wrong", error);
   }
 };
