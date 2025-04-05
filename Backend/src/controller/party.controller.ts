@@ -38,4 +38,3 @@ export const createParty = async (req: IUserRequest, res: Response) => {
   }
 };
 
-
