@@ -16,7 +16,7 @@ const SongSchema = new mongoose.Schema({
   duration: {
     type: Number,
     required: true,
-  }, // Duration in milliseconds
+  },
   added_by: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "User",

@@ -1,5 +1,4 @@
 import mongoose from "mongoose";
-import songModel from "./song.model";
 
 const PartySchema = new mongoose.Schema(
   {
@@ -24,7 +23,12 @@ const PartySchema = new mongoose.Schema(
         ref: "User",
       },
     ],
-    queue: [songModel],
+    queue: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Song",
+      },
+    ],
     created_by: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
