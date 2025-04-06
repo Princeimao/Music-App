@@ -16,7 +16,8 @@ export const authMiddleware = (
   next: NextFunction
 ) => {
   try {
-    const token = req.headers?.authorization?.split(" ")[1];
+    const token =
+      req.cookies["accessToken"] || req.headers?.authorization?.split(" ")[1];
 
     if (!token) {
       res.status(400).json({
@@ -40,13 +41,23 @@ export const authMiddleware = (
     req.user = decoded;
     next();
   } catch (error) {
-    if (error instanceof jwt.TokenExpiredError) {
-      res.status(400).json({
+    console.log("Some error in auth middleware", error);
+    //@ts-ignore
+    if (error.name === "TokenExpiredError") {
+      // Let frontend know token is expired
+      res.status(401).json({
         success: false,
-        message: "Token expired",
+        message: "Access token expired",
+        expired: true,
       });
+      return;
     }
 
-    console.log("something went wrong while getting user (middleware)", error);
+    // Other token errors (invalid, malformed, etc)
+    res.status(401).json({
+      success: false,
+      message: "Invalid token",
+    });
+    return;
   }
 };

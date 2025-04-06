@@ -1,6 +1,5 @@
 import axios from "axios";
 import { Request, Response } from "express";
-import jwt from "jsonwebtoken";
 import querystring from "querystring";
 
 import { IUserRequest } from "../middlewares/auth.middleware";
@@ -78,19 +77,11 @@ export const googleAuthHandler = async (req: Request, res: Response) => {
       return;
     }
 
-    if (!process.env.JWT_SECRET) {
-      return;
-    }
-    const authToken = await jwt.sign(
-      {
-        userId: user?._id,
-        email: user?.email,
-      },
-      process.env.JWT_SECRET,
-      {
-        expiresIn: "1h",
-      }
-    );
+    const accessToken = user.generateAccessToken();
+    const refreshToken = user.generateRefreshToken();
+
+    user.refresh_token = refreshToken;
+    await user.save();
 
     res.status(200).json({
       success: true,
@@ -100,7 +91,11 @@ export const googleAuthHandler = async (req: Request, res: Response) => {
         email: user.email,
         profilePic: user.profile_picture,
       },
-      token: authToken,
+      tokens: {
+        accessToken,
+        refreshToken,
+        spotifyAccessToken: user.spotify_access_token,
+      },
     });
   } catch (error) {
     console.log("something went wrong while creating an user", error);
@@ -112,7 +107,8 @@ export const googleAuthHandler = async (req: Request, res: Response) => {
   }
 };
 
-// TODO: While authenticating i did not checking the state this will help to check is there is some cross site attack
+// TODO: While authenticating i did not checking the state this will help to check is there is
+// some cross site attack
 export const spotifyAuthorization = async (req: Request, res: Response) => {
   try {
     // The code is short time authorization code which give me access token and refresh token in exchange
@@ -178,29 +174,32 @@ export const spotifyAuthorization = async (req: Request, res: Response) => {
       spotify_refresh_token: refresh_token,
     });
 
-    pushPlaylistToDatabase(user._id, access_token);
+    await redisClient.del(state);
+
+    const accessToken = await user.generateAccessToken();
+    const refreshToken = await user.generateRefreshToken();
+    await pushPlaylistToDatabase(user._id, access_token);
+
+    user.refresh_token = refreshToken;
+    await user.save();
 
     if (!process.env.JWT_SECRET) {
       throw new Error("JWT_SECRET is not defined");
     }
 
-    const authToken = await jwt.sign(
-      {
-        userId: user._id,
-        email: user.email,
-      },
-      process.env.JWT_SECRET,
-      {
-        expiresIn: "1h",
-      }
-    );
-
-    await redisClient.del(state);
-
-    res.status(200).json({
-      message: "created user",
-      jwt: authToken,
+    res.cookie("accessToken", accessToken, {
+      httpOnly: true,
     });
+
+    res.cookie("refreshToken", refreshToken, {
+      httpOnly: true,
+    });
+
+    res.cookie("spotifyAccessToken", user.spotify_access_token, {
+      httpOnly: true,
+    });
+
+    res.status(200).redirect(process.env.FRONTEND_URL);
   } catch (error) {
     console.log("something went wrong while authorize from spotfiy", error);
     res.status(400).json({

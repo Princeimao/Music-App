@@ -1,3 +1,4 @@
+import jwt from "jsonwebtoken";
 import mongoose, { Document } from "mongoose";
 
 interface IUser extends Document {
@@ -11,6 +12,9 @@ interface IUser extends Document {
   parties: mongoose.Schema.Types.ObjectId[];
   spotify_refresh_token: string;
   spotify_access_token: string;
+  refresh_token: string;
+  generateAccessToken: () => string;
+  generateRefreshToken: () => string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -57,8 +61,55 @@ const UserSchema = new mongoose.Schema<IUser>(
     spotify_access_token: {
       type: String,
     },
+    refresh_token: {
+      type: String,
+      required: true,
+    },
   },
   { timestamps: true }
 );
 
 export default mongoose.model<IUser>("User", UserSchema);
+
+UserSchema.methods.generateAccessToken = async function () {
+  try {
+    if (!process.env.JWT_SECRET) {
+      return;
+    }
+    const token = await jwt.sign(
+      {
+        userId: this._id,
+        email: this.email,
+      },
+      process.env.JWT_SECRET,
+      {
+        expiresIn: "1h",
+      }
+    );
+
+    return token;
+  } catch (error) {
+    console.log("something went wrong while creating access token", error);
+  }
+};
+
+UserSchema.methods.generateRefreshToken = async function () {
+  try {
+    if (!process.env.JWT_SECRET) {
+      return;
+    }
+    const token = await jwt.sign(
+      {
+        userId: this._id,
+      },
+      process.env.JWT_SECRET,
+      {
+        expiresIn: "1h",
+      }
+    );
+
+    return token;
+  } catch (error) {
+    console.log("something went wrong while generating refresh token", error);
+  }
+};
