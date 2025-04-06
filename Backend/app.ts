@@ -27,6 +27,8 @@ app.get("/", (req, res) => {
   res.send("working");
 });
 
+import partyRouter from "./src/router/party.router";
 import userRouter from "./src/router/user.router";
 
 app.use("/api/user", userRouter);
+app.use("/api/party", partyRouter);

@@ -121,3 +121,33 @@ export const voteSong = async (req: IUserRequest, res: Response) => {
     });
   }
 };
+
+export const removeVote = async (req: IUserRequest, res: Response) => {
+  try {
+    const userId = req.user?.userId;
+    const { songId } = req.body;
+
+    const song = await songModel.findByIdAndUpdate(songId, {
+      $pull: { votes: userId },
+    });
+
+    if (!song) {
+      res.status(400).json({
+        success: false,
+        message: "song not found",
+      });
+      return;
+    }
+
+    res.status(200).json({
+      success: false,
+      message: "Vote removed successfully",
+    });
+  } catch (error) {
+    console.log("something went wrong removing vote", error);
+    res.status(500).json({
+      success: false,
+      message: "something went wrong while removing vote",
+    });
+  }
+};
