@@ -4,15 +4,19 @@ import { IUserRequest } from "../middlewares/auth.middleware";
 import partyModel from "../model/party.model";
 import songModel from "../model/song.model";
 import userModel from "../model/user.model";
+import { generateRandomString } from "../utils/helper";
 
 export const createParty = async (req: IUserRequest, res: Response) => {
   try {
     const userId = req.user?.userId;
     const { name } = req.body;
 
+    const randomString = generateRandomString(6);
+
     const party = await partyModel.create({
       room_name: name,
       admins: userId,
+      inviteCode: randomString,
     });
 
     if (!party) {
@@ -92,7 +96,7 @@ export const addSongToQueue = async (req: IUserRequest, res: Response) => {
   }
 };
 
-export const voteSong = async (req: IUserRequest, res: Response) => {
+export const addVote = async (req: IUserRequest, res: Response) => {
   try {
     const userId = req.user?.userId;
     const { songId } = req.body;
@@ -148,6 +152,75 @@ export const removeVote = async (req: IUserRequest, res: Response) => {
     res.status(500).json({
       success: false,
       message: "something went wrong while removing vote",
+    });
+  }
+};
+
+export const addUser = async (req: IUserRequest, res: Response) => {
+  try {
+    const { inviteCode } = req.params;
+    const userId = req.user?.userId;
+
+    const party = await partyModel.findOne({ inviteCode });
+
+    if (!party) {
+      res.status(400).json({
+        success: false,
+        message: "Invalid Party Code",
+      });
+      return;
+    }
+
+    //@ts-ignore
+    if (party.invitedMembers.includes(userId)) {
+      res.status(400).json({
+        success: false,
+        message: "User already exist",
+      });
+      return;
+    }
+
+    //@ts-ignore
+    party.invitedMembers.push(userId);
+    await party.save();
+
+    res.status(200).json({
+      message: "Joined party!",
+      partyId: party._id,
+    });
+  } catch (error) {
+    console.log("something went wrong adding user to party", error);
+    res.status(400).json({
+      success: false,
+      message: "something went wrong adding user to party",
+    });
+  }
+};
+
+export const getQueuedSong = async (req: IUserRequest, res: Response) => {
+  try {
+    const { id } = req.params;
+
+    const party = await partyModel.findById(id).populate("queue");
+
+    if (!party) {
+      res.status(400).json({
+        success: false,
+        message: "Party Not Found",
+      });
+      return;
+    }
+
+    res.status(200).json({
+      success: false,
+      message: "Party Found Successfully",
+      party,
+    });
+  } catch (error) {
+    console.log("Something went wrong while getting song", error);
+    res.status(500).json({
+      success: false,
+      message: "something went wrong while getting song from party",
     });
   }
 };

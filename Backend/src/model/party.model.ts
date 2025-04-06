@@ -6,7 +6,7 @@ const PartySchema = new mongoose.Schema(
       type: String,
       required: true,
     },
-    users: [
+    invitedMembers: [
       {
         type: mongoose.Schema.Types.ObjectId,
         ref: "User",
@@ -15,28 +15,21 @@ const PartySchema = new mongoose.Schema(
     admins: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
+      required: true,
     },
-
-    co_admins: [
-      {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "User",
-      },
-    ],
     queue: [
       {
         type: mongoose.Schema.Types.ObjectId,
         ref: "Song",
       },
     ],
-    created_by: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
-      required: true,
-    },
     is_active: {
       type: Boolean,
       default: true,
+    },
+    inviteCode: {
+      type: String,
+      required: true,
     },
   },
   { timestamps: true }
