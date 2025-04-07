@@ -39,7 +39,7 @@ const Layout = () => {
   useEffect(() => {
     getUser();
     console.log(user);
-  }, []);
+  }, [user]);
 
   return (
     <main className="bg-[#181818] w-full h-screen">

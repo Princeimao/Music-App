@@ -28,7 +28,7 @@ export const sendTokenToBackend = async (
     if (response.data.isNewUser === true) {
       window.location.href = response.data.spotifyAuthUrl;
     } else {
-      console.log(response.data);
+      navigate("/");
     }
   } catch (error) {
     console.log("Error during backend authentication", error);
