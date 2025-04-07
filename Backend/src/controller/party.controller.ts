@@ -34,6 +34,7 @@ export const createParty = async (req: IUserRequest, res: Response) => {
     res.status(200).json({
       success: true,
       message: "Party Created Successfully",
+      party,
     });
   } catch (error) {
     console.log("something went wrong creating party", error);

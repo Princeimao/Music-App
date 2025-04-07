@@ -21,7 +21,16 @@ export interface IRedisData {
 
 export const googleAuthHandler = async (req: Request, res: Response) => {
   try {
+    console.log("i am here");
     const { token } = req.body;
+
+    if (!token) {
+      res.status(400).json({
+        success: false,
+        message: "token not found",
+      });
+      return;
+    }
 
     const ticket = await client.verifyIdToken({
       idToken: token,
@@ -77,11 +86,18 @@ export const googleAuthHandler = async (req: Request, res: Response) => {
       return;
     }
 
-    const accessToken = user.generateAccessToken();
-    const refreshToken = user.generateRefreshToken();
+    const accessToken = await user.generateAccessToken();
+    const refreshToken = await user.generateRefreshToken();
 
     user.refresh_token = refreshToken;
     await user.save();
+
+    res.cookie("accessToken", accessToken, {
+      sameSite: "none",
+    });
+    res.cookie("refreshToken", refreshToken, {
+      sameSite: "none",
+    });
 
     res.status(200).json({
       success: true,
@@ -189,14 +205,11 @@ export const spotifyAuthorization = async (req: Request, res: Response) => {
 
     res.cookie("accessToken", accessToken, {
       httpOnly: true,
+      secure: false,
     });
-
     res.cookie("refreshToken", refreshToken, {
       httpOnly: true,
-    });
-
-    res.cookie("spotifyAccessToken", user.spotify_access_token, {
-      httpOnly: true,
+      secure: false,
     });
 
     res.status(200).redirect(process.env.FRONTEND_URL);
@@ -211,6 +224,7 @@ export const spotifyAuthorization = async (req: Request, res: Response) => {
 
 export const getUser = async (req: IUserRequest, res: Response) => {
   try {
+    console.log("i got in the controller");
     const userId = req.user?.userId;
 
     const cachedUser = await redisClient.get(`user:${userId}`);
@@ -221,6 +235,7 @@ export const getUser = async (req: IUserRequest, res: Response) => {
         message: "successfully",
         user: JSON.parse(cachedUser),
       });
+      return;
     }
 
     const user = await userModel
@@ -269,3 +284,11 @@ export const getPlaylist = async (req: IUserRequest, res: Response) => {
     console.log("something went wrong", error);
   }
 };
+
+// {
+//     "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2N2YyOThlYzkyZDI4YjgxYjMxYWEwM2YiLCJlbWFpbCI6InBnODc1MDI5NDM2NjU1QGdtYWlsLmNvbSIsImlhdCI6MTc0NDAzODQxMiwiZXhwIjoxNzQ0MDQyMDEyfQ.5yIOyOvKH7aLWTXCCgqGfvfPo9ShAY_Z6RN5ZDUYos8",
+
+//     "refreshToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2N2YyOThlYzkyZDI4YjgxYjMxYWEwM2YiLCJpYXQiOjE3NDQwMzg0MTIsImV4cCI6MTc0NDA0MjAxMn0.0C21seVWGylehudR5w4zY0EpX0gQuw8Nvxn9nx4cJiE",
+
+//     "spotifyAccessToken": "BQC9waC-XYFpR6vDnc_h7fowVcdibjg2hjmPeGekjcl4S_hMM7XY4trujcYjcm_HcCVriguW4CcjhbM7nxtsdyvo5rlreYtY9YjkWz65eFh6pdZaR0dxW45_GrcCfRo1RbYcQrKu49P1x4f9-EkiriubzBezpT6qR9xIoK8ksZ02IVtnM0Vr-cSuD8qC_rSr82LvjbvIDtGCHnEvSSEM_LBvipE3eJkjaiwAhtx6wfkQ5aeQhZiISWgU71BPO4V-X-j5cQdMedS8r2v6vKg-"
+// }

@@ -1,7 +1,6 @@
 import cookieParser from "cookie-parser";
 import cors from "cors";
 import express, { json, urlencoded } from "express";
-import session from "express-session";
 
 export const app = express();
 
@@ -14,14 +13,12 @@ app.use(
   })
 );
 app.use(cookieParser());
-app.use(
-  session({
-    secret: process.env.SESSION_SECRET!,
-    resave: false,
-    saveUninitialized: false,
-    cookie: { secure: false, httpOnly: true },
-  })
-);
+
+app.use((req, res, next) => {
+  res.setHeader("Cross-Origin-Opener-Policy", "same-origin");
+  res.setHeader("Cross-Origin-Embedder-Policy", "require-corp");
+  next();
+});
 
 app.get("/", (req, res) => {
   res.send("working");

@@ -1,4 +1,5 @@
 import axios from "axios";
+import { NavigateFunction } from "react-router-dom";
 
 interface Data {
   data: {
@@ -8,10 +9,14 @@ interface Data {
     name: string;
     profilePic: string;
     spotifyAuthUrl: string;
+    token: string;
   };
 }
 
-export const sendTokenToBackend = async (credential: string) => {
+export const sendTokenToBackend = async (
+  credential: string,
+  navigate: NavigateFunction
+) => {
   try {
     const response: Data = await axios.post(
       `http://localhost:3000/api/user/register`,
@@ -20,15 +25,12 @@ export const sendTokenToBackend = async (credential: string) => {
       }
     );
 
-    console.log(response);
-
     if (response.data.isNewUser === true) {
       window.location.href = response.data.spotifyAuthUrl;
+    } else {
+      console.log(response.data);
     }
   } catch (error) {
-    console.log(
-      "something went wrong while getting an respond from the backend",
-      error
-    );
+    console.log("Error during backend authentication", error);
   }
 };

@@ -1,10 +1,13 @@
 import Bottombar from "@/components/Bars/Bottombar";
 import Sidebar from "@/components/Bars/Sidebar";
 import Topbar from "@/components/Bars/Topbar";
+import axios from "axios";
 import { useEffect, useState } from "react";
 
 const Layout = () => {
   const [isMobile, setIsMobile] = useState<boolean>(window.innerWidth < 640);
+  const [user, setUser] = useState(null);
+  console.log(user);
 
   useEffect(() => {
     const handleResize = () => {
@@ -14,6 +17,30 @@ const Layout = () => {
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);
+
+  const getUser = async () => {
+    try {
+      const response = await axios.get(
+        `http://localhost:3000/api/user/getUser`,
+        {
+          withCredentials: true,
+        }
+      );
+      console.log(response.data.user);
+      setUser(response.data.user);
+    } catch (error) {
+      console.log(
+        "something went wrong while getting user from backend",
+        error
+      );
+    }
+  };
+
+  useEffect(() => {
+    getUser();
+    console.log(user);
+  }, []);
+
   return (
     <main className="bg-[#181818] w-full h-screen">
       {isMobile ? <Bottombar /> : <Topbar />}

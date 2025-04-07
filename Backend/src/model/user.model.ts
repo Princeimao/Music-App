@@ -63,13 +63,10 @@ const UserSchema = new mongoose.Schema<IUser>(
     },
     refresh_token: {
       type: String,
-      required: true,
     },
   },
   { timestamps: true }
 );
-
-export default mongoose.model<IUser>("User", UserSchema);
 
 UserSchema.methods.generateAccessToken = async function () {
   try {
@@ -113,3 +110,5 @@ UserSchema.methods.generateRefreshToken = async function () {
     console.log("something went wrong while generating refresh token", error);
   }
 };
+
+export default mongoose.model<IUser>("User", UserSchema);
