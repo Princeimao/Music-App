@@ -224,7 +224,6 @@ export const spotifyAuthorization = async (req: Request, res: Response) => {
 
 export const getUser = async (req: IUserRequest, res: Response) => {
   try {
-    console.log("i got in the controller");
     const userId = req.user?.userId;
 
     const cachedUser = await redisClient.get(`user:${userId}`);
@@ -241,7 +240,7 @@ export const getUser = async (req: IUserRequest, res: Response) => {
     const user = await userModel
       .findById(userId)
       .select(
-        "name email profile_picture playlists liked_songs parties access_token"
+        "name email profile_picture playlists liked_songs parties spotify_access_token"
       )
       .populate("playlists")
       .populate("liked_songs")

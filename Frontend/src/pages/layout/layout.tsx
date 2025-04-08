@@ -1,13 +1,31 @@
 import Bottombar from "@/components/Bars/Bottombar";
 import Sidebar from "@/components/Bars/Sidebar";
 import Topbar from "@/components/Bars/Topbar";
+import { RootState } from "@/context/store/store";
+import { login } from "@/context/userSlice";
 import axios from "axios";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { useNavigate } from "react-router-dom";
+
+interface Response {
+  data: {
+    success: boolean;
+    message: string;
+    user: {
+      _id: string;
+      name: string;
+      email: string;
+      profile_picture: string;
+    };
+  };
+}
 
 const Layout = () => {
   const [isMobile, setIsMobile] = useState<boolean>(window.innerWidth < 640);
-  const [user, setUser] = useState(null);
-  console.log(user);
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
+  const user = useSelector((state: RootState) => state.user);
 
   useEffect(() => {
     const handleResize = () => {
@@ -18,28 +36,38 @@ const Layout = () => {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  const getUser = async () => {
+  const getUser = useCallback(async () => {
     try {
-      const response = await axios.get(
+      const response: Response = await axios.get(
         `http://localhost:3000/api/user/getUser`,
         {
           withCredentials: true,
         }
       );
-      console.log(response.data.user);
-      setUser(response.data.user);
+
+      if (response.data.success) {
+        const payload = {
+          userId: response.data.user._id,
+          name: response.data.user.name,
+          email: response.data.user.email,
+          profile_picture: response.data.user.profile_picture,
+          isAuthenticated: true,
+        };
+
+        dispatch(login(payload)); 
+      }
     } catch (error) {
-      console.log(
-        "something went wrong while getting user from backend",
-        error
-      );
+      console.error("Error fetching user:", error);
     }
-  };
+  }, [dispatch]);
 
   useEffect(() => {
-    getUser();
-    console.log(user);
-  }, [user]);
+    if (user.isAuthenticated) {
+      navigate("/");
+    } else {
+      getUser();
+    }
+  }, [navigate, user.isAuthenticated, getUser]);
 
   return (
     <main className="bg-[#181818] w-full h-screen">

@@ -2,6 +2,7 @@ import { House, Search } from "lucide-react";
 import { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 
+import { RootState } from "@/context/store/store";
 import { useSelector } from "react-redux";
 import logo from "../../Logo.svg";
 import { Button } from "../ui/button";
@@ -19,7 +20,7 @@ const Topbar = () => {
   const [searchSong, setSearchSong] = useState<string>("");
   const navigate = useNavigate();
   const { pathname } = useLocation();
-  const user = useSelector((state) => state.user);
+  const user = useSelector((state: RootState) => state.user);
 
   console.log("userState", user);
 
