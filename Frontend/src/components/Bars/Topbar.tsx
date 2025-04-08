@@ -1,14 +1,27 @@
 import { House, Search } from "lucide-react";
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 
+import { useSelector } from "react-redux";
 import logo from "../../Logo.svg";
 import { Button } from "../ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "../ui/dropdown-menu";
 import { Input } from "../ui/input";
 
 const Topbar = () => {
   const [searchSong, setSearchSong] = useState<string>("");
   const navigate = useNavigate();
+  const { pathname } = useLocation();
+  const user = useSelector((state) => state.user);
+
+  console.log("userState", user);
 
   return (
     <div className="h-18 w-full flex items-center px-8 justify-between">
@@ -17,7 +30,10 @@ const Topbar = () => {
 
         <div className="middle flex items-center gap-4 ">
           <div className="bg-[#292929] w-12 h-12 flex justify-center items-center rounded-full">
-            <House className="text-white hover:text-white transition-all " />
+            <House
+              className="text-white hover:text-white transition-all "
+              fill={pathname === "/" ? "white" : "transparent"}
+            />
           </div>
 
           <div className="bg-[#292929] md:w-[50vh]  h-12 rounded-full flex items-center px-2.5 hover:border hover:border-gray-500 hover:bg-[#343333]">
@@ -35,19 +51,50 @@ const Topbar = () => {
         </div>
       </div>
 
-      <div className="end">
-        <Button
-          onClick={() => navigate("/register")}
-          className="bg-transparent"
-        >
-          Sign up
-        </Button>
-        <Button onClick={() => navigate("/login")} variant="topbar">
-          Log in
-        </Button>
+      <div className="end flex items-center gap-5">
+        {user.isAuthenticated ? (
+          <DropdownMenu>
+            <DropdownMenuTrigger
+              className="bg-[#2f2f2faf] w-12 h-12 rounded-full"
+              asChild
+            >
+              <img
+                src={user.profile_picture}
+                alt="profile_pic"
+                className="rounded-full w-12 h-12"
+              />
+            </DropdownMenuTrigger>
+            <DropdownMenuContent className="bg-[#2F2F2F] text-white border-none w-[21vh]">
+              <DropdownMenuLabel>{user.name}</DropdownMenuLabel>
+              <DropdownMenuSeparator className="bg-[#181818]" />
+              <DropdownMenuItem>Account</DropdownMenuItem>
+              <DropdownMenuItem>Profile</DropdownMenuItem>
+              <DropdownMenuSeparator className="bg-[#181818]" />
+              <DropdownMenuItem>Log Out</DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        ) : (
+          <>
+            <Button
+              onClick={() => navigate("/register")}
+              className="bg-transparent"
+            >
+              Sign up
+            </Button>
+            <Button onClick={() => navigate("/login")} variant="topbar">
+              Log in
+            </Button>
+          </>
+        )}
       </div>
     </div>
   );
 };
 
 export default Topbar;
+
+{
+  /* 
+
+         */
+}
