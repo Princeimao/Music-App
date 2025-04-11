@@ -16,7 +16,6 @@ export const authMiddleware = (
   next: NextFunction
 ) => {
   try {
-    console.log("i got here", req.cookies);
     const token =
       req.cookies["accessToken"] || req.headers?.authorization?.split(" ")[1];
 

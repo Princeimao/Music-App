@@ -1,33 +1,27 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 
-interface ImageState {
+export interface ImageState {
   url: string;
   height: number;
   width: number;
 }
 
-interface PlaylistState {
+export interface PlaylistState {
   spotifyId: string;
   images: ImageState[];
   author: string;
   name: string;
-  public: string;
+  public: boolean;
 }
 
-const initialState: PlaylistState = {
-  spotifyId: "",
-  images: [],
-  author: "",
-  name: "",
-  public: "",
-};
+const initialState: PlaylistState[] = [];
 
 const playlistSlice = createSlice({
   name: "playlist_slice",
   initialState,
   reducers: {
-    setPlaylist: (state, action: PayloadAction<PlaylistState>) => {
-      return { ...action.payload };
+    setPlaylist: (state, action: PayloadAction<PlaylistState[]>) => {
+      return [...action.payload];
     },
     deletePlaylist: (state) => {
       return { ...initialState };

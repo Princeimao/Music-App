@@ -118,6 +118,8 @@ export const pushPlaylistToDatabase = async (
       author: userId,
     }));
 
+    console.log("playlistdoc", playlistDocs);
+
     const data = await playlistModel.bulkWrite(
       //@ts-ignore
       playlistDocs.map((playlist) => ({
@@ -131,13 +133,10 @@ export const pushPlaylistToDatabase = async (
 
     const upsertedIds = Object.values(data.upsertedIds);
 
-    // update the user field
     if (upsertedIds.length > 0) {
       await userModel.findByIdAndUpdate(userId, {
         $addToSet: { playlists: { $each: upsertedIds } },
       });
-
-      console.log("User's playlist references updated!");
     }
 
     return;

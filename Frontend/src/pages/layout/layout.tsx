@@ -1,12 +1,13 @@
 import Bottombar from "@/components/Bars/Bottombar";
 import Sidebar from "@/components/Bars/Sidebar";
 import Topbar from "@/components/Bars/Topbar";
+import { setPlaylist } from "@/context/playlistSlice";
 import { RootState } from "@/context/store/store";
 import { login } from "@/context/userSlice";
 import axios from "axios";
 import { useCallback, useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { useNavigate } from "react-router-dom";
+import { Outlet, useNavigate } from "react-router-dom";
 
 interface Response {
   data: {
@@ -17,6 +18,15 @@ interface Response {
       name: string;
       email: string;
       profile_picture: string;
+      playlists: [
+        {
+          author: string;
+          spotifyId: string;
+          images: [];
+          name: string;
+          public: boolean;
+        }
+      ];
     };
   };
 }
@@ -54,26 +64,36 @@ const Layout = () => {
           isAuthenticated: true,
         };
 
-        dispatch(login(payload)); 
+        const playlistPayload = response.data.user.playlists.map(
+          (playlist) => ({
+            spotifyId: playlist.spotifyId,
+            images: playlist.images,
+            author: playlist.author,
+            name: playlist.name,
+            public: playlist.public,
+          })
+        );
+
+        dispatch(login(payload));
+        dispatch(setPlaylist(playlistPayload));
       }
+
     } catch (error) {
       console.error("Error fetching user:", error);
     }
   }, [dispatch]);
 
   useEffect(() => {
-    if (user.isAuthenticated) {
-      navigate("/");
-    } else {
-      getUser();
-    }
+    getUser();
   }, [navigate, user.isAuthenticated, getUser]);
 
   return (
     <main className="bg-[#181818] w-full h-screen">
       {isMobile ? <Bottombar /> : <Topbar />}
-      <div className="w-full h-[76%] px-2">{isMobile ? null : <Sidebar />}</div>
-      <div className="w-full h-[14vh] bg-[#181818]"></div>
+      <div className="w-full h-[78%] px-2 flex gap-2">
+        {isMobile ? null : <Sidebar />}
+        <Outlet />
+      </div>
     </main>
   );
 };
