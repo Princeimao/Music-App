@@ -11,6 +11,7 @@ import { Outlet, useNavigate } from "react-router-dom";
 
 interface Response {
   data: {
+    expired: boolean;
     success: boolean;
     message: string;
     user: {
@@ -76,8 +77,17 @@ const Layout = () => {
 
         dispatch(login(payload));
         dispatch(setPlaylist(playlistPayload));
+      } else if (response.data.expired) {
+        const response: Response = await axios.get(
+          `http://localhost:3000/api/user/getAccessToken`,
+          {
+            withCredentials: true,
+          }
+        );
+        if (response.data.success) {
+          getUser();
+        }
       }
-
     } catch (error) {
       console.error("Error fetching user:", error);
     }

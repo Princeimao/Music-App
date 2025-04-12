@@ -4,8 +4,10 @@ import { useSelector } from "react-redux";
 import SmallCard from "../cards/SmallCard";
 
 const Sidebar = () => {
+  const isAuthenticated = useSelector(
+    (state: RootState) => state.user.isAuthenticated
+  );
   const playlists = useSelector((state: RootState) => state.playlist);
-  console.log(playlists);
   return (
     <div className="w-[50vh] bg-[#2f2f2f] h-full rounded-md px-3 py-3">
       <div className="flex items-center ">
@@ -17,16 +19,28 @@ const Sidebar = () => {
           <Plus color="white" />
         </div>
       </div>
-      {playlists.map((playlist) => (
-        <SmallCard
-          spotifyId={playlist.spotifyId}
-          key={playlist.spotifyId}
-          images={playlist.images}
-          author={playlist.author}
-          playlistName={playlist.name}
-          type="Playlist"
-        />
-      ))}
+      {isAuthenticated ? (
+        playlists.length > 0 ? (
+          playlists.map((playlist) => (
+            <SmallCard
+              spotifyId={playlist.spotifyId}
+              key={playlist.spotifyId}
+              images={playlist.images}
+              author={playlist.author}
+              playlistName={playlist.name}
+              type="Playlist"
+            />
+          ))
+        ) : (
+          <p className="text-sm font-medium text-[#4f4f4f] ml-3.5">
+            No playlist found
+          </p>
+        )
+      ) : (
+        <p className="text-sm font-medium text-[#4f4f4f] ml-3.5">
+          user not logged In
+        </p>
+      )}
     </div>
   );
 };

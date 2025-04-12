@@ -1,6 +1,10 @@
 import axios from "axios";
 import { NavigateFunction } from "react-router-dom";
 
+import { deletePlaylist } from "@/context/playlistSlice";
+import { AppDispatch } from "@/context/store/store";
+import { logout } from "@/context/userSlice";
+
 interface Data {
   data: {
     email: string;
@@ -29,6 +33,20 @@ export const sendTokenToBackend = async (
       window.location.href = response.data.spotifyAuthUrl;
     } else {
       navigate("/");
+    }
+  } catch (error) {
+    console.log("Error during backend authentication", error);
+  }
+};
+
+export const logoutUser = async (dispatch: AppDispatch) => {
+  try {
+    const response = await axios.post(`http://localhost:3000/api/user/logout`, {
+      withCredentials: true,
+    });
+    if (response.data.success) {
+      dispatch(logout());
+      dispatch(deletePlaylist());
     }
   } catch (error) {
     console.log("Error during backend authentication", error);

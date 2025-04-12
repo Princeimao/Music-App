@@ -2,8 +2,9 @@ import { House, Search } from "lucide-react";
 import { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 
+import { logoutUser } from "@/apis/authentication.api";
 import { RootState } from "@/context/store/store";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import logo from "../../Logo.svg";
 import { Button } from "../ui/button";
 import {
@@ -21,8 +22,7 @@ const Topbar = () => {
   const navigate = useNavigate();
   const { pathname } = useLocation();
   const user = useSelector((state: RootState) => state.user);
-
-  console.log("userState", user);
+  const dispatch = useDispatch();
 
   return (
     <div className="h-18 w-full flex items-center px-8 justify-between">
@@ -37,7 +37,7 @@ const Topbar = () => {
             />
           </div>
 
-          <div className="bg-[#292929] md:w-[50vh]  h-12 rounded-full flex items-center px-2.5 hover:border hover:border-gray-500 hover:bg-[#343333]">
+          <div className="bg-[#292929] md:w-[50vh] h-12 rounded-full flex items-center px-2.5 focus-within:border focus-within:border-gray-500 focus-within:bg-[#343333]">
             <span>
               <Search size={25} className="text-white" />
             </span>
@@ -71,7 +71,9 @@ const Topbar = () => {
               <DropdownMenuItem>Account</DropdownMenuItem>
               <DropdownMenuItem>Profile</DropdownMenuItem>
               <DropdownMenuSeparator className="bg-[#181818]" />
-              <DropdownMenuItem>Log Out</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => logoutUser(dispatch)}>
+                Log Out
+              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         ) : (
