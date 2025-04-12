@@ -1,5 +1,6 @@
 import axios from "axios";
 import { Request, Response } from "express";
+import jwt from "jsonwebtoken";
 import querystring from "querystring";
 
 import { IUserRequest } from "../middlewares/auth.middleware";
@@ -21,7 +22,6 @@ export interface IRedisData {
 
 export const googleAuthHandler = async (req: Request, res: Response) => {
   try {
-
     const { token } = req.body;
 
     if (!token) {
@@ -93,8 +93,8 @@ export const googleAuthHandler = async (req: Request, res: Response) => {
     await user.save();
 
     res.cookie("accessToken", accessToken, {
-      httpOnly: true, 
-      sameSite: "none"
+      httpOnly: true,
+      sameSite: "none",
     });
     res.cookie("refreshToken", refreshToken, {
       httpOnly: true,
@@ -283,5 +283,69 @@ export const getPlaylist = async (req: IUserRequest, res: Response) => {
     res.status(200).json(response);
   } catch (error) {
     console.log("something went wrong", error);
+  }
+};
+
+export const getNewAccessToken = async (req: IUserRequest, res: Response) => {
+  try {
+    const token =
+      req.cookies["refreshToken"] || req.headers?.authorization?.split(" ")[1];
+
+    if (!token) {
+      res.status(400).json({
+        success: false,
+        message: "No Refresh Token",
+      });
+      return;
+    }
+
+    if (!process.env.JWT_SECRET) {
+      throw new Error("JWT SECRET NOT FOUND");
+    }
+
+    const decoded = jwt.verify(token, process.env.JWT_SECRET) as {
+      userId: string;
+      iat: number;
+      exp: number;
+    };
+
+    const user = await userModel.findById(decoded.userId);
+
+    if (!user) {
+      res.status(400).json({
+        success: false,
+        message: "User not found",
+      });
+      return;
+    }
+
+    const accessToken = user.generateAccessToken();
+
+    res.cookie("accessToken", accessToken, {
+      httpOnly: true,
+      secure: false,
+    });
+    res.status(200).json({
+      success: true,
+      message: "new token generated",
+    });
+  } catch (error) {
+    console.log("Refresh token is expired");
+    //@ts-ignore
+    if (error.name === "TokenExpiredError") {
+      res.status(401).json({
+        success: false,
+        message: "Refresh is token expired",
+        expired: true,
+      });
+      return;
+    }
+
+    // Other token errors (invalid, malformed, etc)
+    res.status(401).json({
+      success: false,
+      message: "Invalid token",
+    });
+    return;
   }
 };

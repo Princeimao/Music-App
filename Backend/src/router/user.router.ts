@@ -1,5 +1,6 @@
 import express from "express";
 import {
+  getNewAccessToken,
   getUser,
   googleAuthHandler,
   spotifyAuthorization,
@@ -12,5 +13,6 @@ const router = express.Router();
 router.route("/register").post(googleAuthHandler);
 router.route("/spotify").get(spotifyAuthorization);
 router.route("/getUser").get(authMiddleware, getUser);
+router.route("/getAccessToken").post(getNewAccessToken);
 
 export default router;

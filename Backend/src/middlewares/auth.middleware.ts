@@ -23,6 +23,7 @@ export const authMiddleware = (
       res.status(400).json({
         success: false,
         message: "Access Denied, Not an Authenticated User",
+        expired: true,
       });
       return;
     }
