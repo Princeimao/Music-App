@@ -19,6 +19,7 @@ interface Response {
       name: string;
       email: string;
       profile_picture: string;
+      spotify_access_token: string;
       playlists: [
         {
           author: string;
@@ -77,19 +78,27 @@ const Layout = () => {
 
         dispatch(login(payload));
         dispatch(setPlaylist(playlistPayload));
-      } else if (response.data.expired) {
-        const response: Response = await axios.get(
-          `http://localhost:3000/api/user/getAccessToken`,
-          {
-            withCredentials: true,
-          }
+        localStorage.setItem(
+          "spotifyToken",
+          response.data.user.spotify_access_token
         );
-        if (response.data.success) {
-          getUser();
-        }
       }
     } catch (error) {
-      console.error("Error fetching user:", error);
+      if (error.response && error.response.data?.expired) {
+        try {
+          const res: Response = await axios.post(
+            `http://localhost:3000/api/user/getAccessToken`,
+            {
+              withCredentials: true,
+            }
+          );
+          if (res.data.success) {
+            getUser();
+          }
+        } catch (e) {
+          console.error("Error refreshing token:", e);
+        }
+      }
     }
   }, [dispatch]);
 

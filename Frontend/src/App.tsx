@@ -16,6 +16,7 @@ function App() {
         <Route element={<Layout />}>
           <Route path="/" element={<Home />} />
           <Route path="/playlist/:spotifyId" element={<Playlist />} />
+          <Route path="/search/:searchParameter" element={<Playlist />} />
         </Route>
       </Routes>
     </BrowserRouter>

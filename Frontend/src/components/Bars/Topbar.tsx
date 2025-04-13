@@ -1,5 +1,5 @@
 import { House, Search } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 
 import { logoutUser } from "@/apis/authentication.api";
@@ -18,15 +18,34 @@ import {
 import { Input } from "../ui/input";
 
 const Topbar = () => {
-  const [searchSong, setSearchSong] = useState<string>("");
   const navigate = useNavigate();
   const { pathname } = useLocation();
   const user = useSelector((state: RootState) => state.user);
   const dispatch = useDispatch();
+  const [input, setInput] = useState<string>("");
+  const [debouncedInput, setDebouncedInput] = useState<string>("");
+
+  useEffect(() => {
+    if (input !== "") {
+      navigate(`/search/${encodeURIComponent(input)}`);
+    }
+
+    const timeout = setTimeout(() => {
+      setDebouncedInput(input.trim());
+    }, 400);
+
+    return () => clearTimeout(timeout);
+  }, [input, navigate]);
+
+  useEffect(() => {
+    if (debouncedInput) {
+      console.log("Searching for:", debouncedInput);
+    }
+  }, [debouncedInput]);
 
   return (
     <div className="h-18 w-full flex items-center px-8 justify-between">
-      <div className="flex gap-12 items-center ">
+      <div className="flex gap-12 items-center" onClick={() => navigate("/")}>
         <img src={logo} alt="logo" className="h-10" />
 
         <div className="middle flex items-center gap-4 ">
@@ -45,8 +64,8 @@ const Topbar = () => {
               className="border-none bg-transparent placeholder:text-white font-[Lato] text-[2.1vh] text-white placeholder:font-semibold placeholder:text-[2.1vh]"
               type="text"
               placeholder="What do you want to play?"
-              onChange={(e) => setSearchSong(e.target.value)}
-              value={searchSong}
+              onChange={(e) => setInput(e.target.value)}
+              value={input}
             />
           </div>
         </div>
@@ -95,9 +114,3 @@ const Topbar = () => {
 };
 
 export default Topbar;
-
-{
-  /* 
-
-         */
-}
