@@ -13,6 +13,7 @@ interface IUser extends Document {
   spotify_refresh_token: string;
   spotify_access_token: string;
   refresh_token: string;
+  songHistory: mongoose.Schema.Types.ObjectId[];
   generateAccessToken: () => string;
   generateRefreshToken: () => string;
   createdAt: Date;
@@ -55,6 +56,12 @@ const UserSchema = new mongoose.Schema<IUser>(
         ref: "Party",
       },
     ], // Reference to parties the user has joined
+    songHistory: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "SongHistory",
+      },
+    ],
     spotify_refresh_token: {
       type: String,
     },
@@ -101,7 +108,7 @@ UserSchema.methods.generateRefreshToken = async function () {
       },
       process.env.JWT_SECRET,
       {
-        expiresIn: "1h",
+        expiresIn: "7d",
       }
     );
 

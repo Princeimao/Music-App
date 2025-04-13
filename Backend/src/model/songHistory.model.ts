@@ -28,8 +28,12 @@ const SongSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
+    playedTimes: {
+      type: Number,
+      default: 1,
+    },
   },
   { timestamps: true }
 );
 
-export default mongoose.model("Song", SongSchema);
+export default mongoose.model("SongHistory", SongSchema);

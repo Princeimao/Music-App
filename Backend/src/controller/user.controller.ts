@@ -95,11 +95,15 @@ export const googleAuthHandler = async (req: Request, res: Response) => {
     res.cookie("accessToken", accessToken, {
       httpOnly: true,
       sameSite: "none",
+      maxAge: 60 * 60 * 1000,
     });
     res.cookie("refreshToken", refreshToken, {
       httpOnly: true,
       sameSite: "none",
+      maxAge: 7 * 24 * 60 * 60 * 1000,
     });
+
+    console.log(accessToken);
 
     res.status(200).json({
       success: true,
@@ -110,8 +114,6 @@ export const googleAuthHandler = async (req: Request, res: Response) => {
         profilePic: user.profile_picture,
       },
       tokens: {
-        accessToken,
-        refreshToken,
         spotifyAccessToken: user.spotify_access_token,
       },
     });
@@ -207,11 +209,13 @@ export const spotifyAuthorization = async (req: Request, res: Response) => {
 
     res.cookie("accessToken", accessToken, {
       httpOnly: true,
-      secure: false,
+      sameSite: "none",
+      maxAge: 60 * 60 * 1000,
     });
     res.cookie("refreshToken", refreshToken, {
       httpOnly: true,
-      secure: false,
+      sameSite: "none",
+      maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
     res.status(200).redirect(process.env.FRONTEND_URL);
@@ -248,8 +252,6 @@ export const getUser = async (req: IUserRequest, res: Response) => {
       .populate("liked_songs")
       .populate("parties");
 
-    console.log(user);
-
     if (!user) {
       res.status(400).json({
         success: false,
@@ -283,11 +285,16 @@ export const getPlaylist = async (req: IUserRequest, res: Response) => {
     res.status(200).json(response);
   } catch (error) {
     console.log("something went wrong", error);
+    res.status(500).json({
+      success: false,
+      message: "Unable to get playlist",
+    });
   }
 };
 
 export const getNewAccessToken = async (req: IUserRequest, res: Response) => {
   try {
+    console.log(req.cookies);
     const token =
       req.cookies["refreshToken"] || req.headers?.authorization?.split(" ")[1];
 
@@ -297,6 +304,18 @@ export const getNewAccessToken = async (req: IUserRequest, res: Response) => {
         message: "No Refresh Token",
       });
       return;
+    }
+
+    const result = await redisClient.get(`JWT:BlackList:${token}`);
+
+    if (result) {
+      if (parseInt(result) == 1) {
+        res.status(400).json({
+          success: false,
+          message: "Token already expired",
+        });
+        return;
+      }
     }
 
     if (!process.env.JWT_SECRET) {
@@ -323,7 +342,8 @@ export const getNewAccessToken = async (req: IUserRequest, res: Response) => {
 
     res.cookie("accessToken", accessToken, {
       httpOnly: true,
-      secure: false,
+      sameSite: "none",
+      maxAge: 60 * 60 * 1000,
     });
     res.status(200).json({
       success: true,
@@ -344,8 +364,46 @@ export const getNewAccessToken = async (req: IUserRequest, res: Response) => {
     // Other token errors (invalid, malformed, etc)
     res.status(401).json({
       success: false,
-      message: "Invalid token",
+      message: "Invalid Refresh token",
     });
     return;
+  }
+};
+
+export const logout = async (req: IUserRequest, res: Response) => {
+  try {
+    const token =
+      req.cookies["refreshToken"] || req.headers?.authorization?.split(" ")[1];
+
+    if (!token) {
+      res.status(400).json({
+        success: false,
+        message: "No Refresh Token",
+      });
+      return;
+    }
+
+    redisClient.set(`JWT:BlackList:${token}`, 1, "EX", 7 * 24 * 60 * 60);
+
+    res.clearCookie("accessToken", {
+      httpOnly: true,
+      sameSite: "none",
+    });
+
+    res.clearCookie("refreshToken", {
+      httpOnly: true,
+      sameSite: "none",
+    });
+
+    res.status(200).json({
+      success: true,
+      message: "user Logged out successfully",
+    });
+  } catch (error) {
+    console.log("something went wrong while logging out user");
+    res.status(500).json({
+      success: false,
+      message: "something went wrong while logging out user",
+    });
   }
 };

@@ -3,6 +3,7 @@ import {
   getNewAccessToken,
   getUser,
   googleAuthHandler,
+  logout,
   spotifyAuthorization,
 } from "../controller/user.controller";
 
@@ -14,5 +15,6 @@ router.route("/register").post(googleAuthHandler);
 router.route("/spotify").get(spotifyAuthorization);
 router.route("/getUser").get(authMiddleware, getUser);
 router.route("/getAccessToken").post(getNewAccessToken);
+router.route("/logout").post(authMiddleware, logout);
 
 export default router;
