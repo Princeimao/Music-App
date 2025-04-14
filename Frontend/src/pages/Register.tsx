@@ -1,4 +1,4 @@
-import { RegisterForm } from "@/components/ui/RegisterForm";
+import { RegisterForm } from "@/components/forms/RegisterForm";
 import logo from "../Logo.svg";
 
 const RegisterPage = () => {
