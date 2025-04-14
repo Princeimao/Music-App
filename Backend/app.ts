@@ -25,7 +25,9 @@ app.get("/", (req, res) => {
 });
 
 import partyRouter from "./src/router/party.router";
+import spotifyRouter from "./src/router/spotify.router";
 import userRouter from "./src/router/user.router";
 
 app.use("/api/user", userRouter);
 app.use("/api/party", partyRouter);
+app.use("/api/spotify", spotifyRouter);

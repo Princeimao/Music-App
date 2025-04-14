@@ -29,7 +29,7 @@ export const searchSuggestion = async (req: IUserRequest, res: Response) => {
       return;
     }
 
-    const res = await axios.get(
+    const response = await axios.get(
       `https://api.spotify.com/v1/search?q=${querystring.stringify({
         q: searchTerm,
         type: type,
@@ -46,10 +46,10 @@ export const searchSuggestion = async (req: IUserRequest, res: Response) => {
       success: true,
       message: "Search suggestion fetched successfully",
       searchSuggestion: {
-        artists: res.data.artists.items,
-        albums: res.data.albums.items,
-        tracks: res.data.tracks.items,
-        playlists: res.data.playlists.items,
+        artists: response.data?.artists?.items,
+        albums: response.data?.albums?.items,
+        tracks: response.data?.tracks?.items,
+        playlists: response.data?.playlists?.items,
         alreadyPlayed: user.songHistory,
       },
     });
@@ -109,6 +109,76 @@ export const lastPlayedSong = async (req: IUserRequest, res: Response) => {
     res.status(500).json({
       success: false,
       message: "Something went wrong while getting the last Played song",
+    });
+  }
+};
+
+export const updateLastPlayedSong = async (
+  req: IUserRequest,
+  res: Response
+) => {
+  try {
+    const {
+      spotify_id,
+      title,
+      artist,
+      album,
+      album_cover,
+      duration,
+      url,
+      playedTimes,
+    } = req.body;
+
+    // can be improved by using a queue system (rabbitMQ or kafka)
+    const userId = req.user?.userId;
+    const user = await userModel.findById(userId).lean(true);
+
+    if (!user) {
+      res.status(400).json({
+        success: false,
+        message: "User not found || User not authenticated",
+      });
+      return;
+    }
+
+    const updateResult = await userModel.updateOne(
+      { _id: userId, "songHistory.spotify_id": spotify_id },
+      {
+        $inc: { "songHistory.$.playedTimes": 1 },
+        $set: { "songHistory.$.lastPlayedAt": new Date() },
+      }
+    );
+
+    if (updateResult.modifiedCount === 0) {
+      await userModel.updateOne(
+        { _id: userId },
+        {
+          $push: {
+            songHistory: {
+              spotify_id,
+              title,
+              artist,
+              album,
+              album_cover,
+              duration,
+              url,
+              playedTimes: 1,
+              createdAt: new Date(),
+            },
+          },
+        }
+      );
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "Song updated",
+    });
+  } catch (error) {
+    console.log("Error in updating last played song", error);
+    res.status(500).json({
+      success: false,
+      message: "Something went wrong while updating last played song",
     });
   }
 };
