@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
 
-const SongSchema = new mongoose.Schema(
+const SongHistorySchema = new mongoose.Schema(
   {
     spotify_id: {
       type: String,
@@ -36,4 +36,4 @@ const SongSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-export default mongoose.model("SongHistory", SongSchema);
+export default mongoose.model("SongHistory", SongHistorySchema);

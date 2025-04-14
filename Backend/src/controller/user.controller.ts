@@ -9,6 +9,7 @@ import { client } from "../utils/google.utils";
 import {
   currentUserPlaylist,
   generateRandomString,
+  newAccessToken,
   pushPlaylistToDatabase,
 } from "../utils/helper";
 import { redisClient } from "../utils/redis.client";
@@ -88,9 +89,23 @@ export const googleAuthHandler = async (req: Request, res: Response) => {
 
     const accessToken = await user.generateAccessToken();
     const refreshToken = await user.generateRefreshToken();
+    //@ts-ignore
+    const newSpotifyAccessToken = await newAccessToken(user._id);
 
+    if (!newSpotifyAccessToken) {
+      res.status(400).json({
+        success: false,
+        message: "Unable to get new access token",
+      });
+      return;
+    }
+
+    user.spotify_access_token = newSpotifyAccessToken.access_token;
     user.refresh_token = refreshToken;
     await user.save();
+
+    console.log("accessToken", accessToken);
+    console.log("spotifyToken", newSpotifyAccessToken.access_token);
 
     res.cookie("accessToken", accessToken, {
       httpOnly: true,

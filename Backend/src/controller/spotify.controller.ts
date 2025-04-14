@@ -8,12 +8,12 @@ export const searchSuggestion = async (req: IUserRequest, res: Response) => {
   try {
     const userId = req.user?.userId;
     const { searchTerm, type } = req.body;
-
     const user = await userModel
       .findById(userId)
       .select("spotify_access_token")
       .populate({
-        path: "songHistory",
+        path: "SongHistory",
+        strictPopulate: false,
         match: { title: { $regex: searchTerm, $options: "i" } },
         options: {
           limit: 4,
@@ -68,17 +68,21 @@ export const lastPlayedSong = async (req: IUserRequest, res: Response) => {
     const { page = 0 } = req.body;
     const limit = 20;
 
+    console.log("here");
+
     const user = await userModel
       .findById(userId)
       .select("songHistory")
       .populate({
-        path: "songHistory",
+        path: "SongHistory",
+        strictPopulate: false,
         options: {
           sort: { createdAt: -1 },
           skip: page * limit,
           limit: limit,
         },
-      });
+      })
+      .lean(true);
 
     if (!user) {
       res.status(400).json({

@@ -67,8 +67,8 @@ export const newAccessToken = async (userId: string) => {
         },
       }
     );
-
-    return response;
+    console.log("response", response.data);
+    return response.data;
   } catch (error) {
     console.log("something went wrong while creating new access token");
   }
