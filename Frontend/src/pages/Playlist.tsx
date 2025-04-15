@@ -1,3 +1,4 @@
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useParams } from "react-router-dom";
 
 const Playlist = () => {
@@ -9,7 +10,10 @@ const Playlist = () => {
         <div>
           <h4>Public Playlist</h4>
           <h1 className="text-[17vh] font-bold">Punjabi</h1>
-          <div className="bg-[#2f2f2faf] w-8 h-8 rounded-full"></div>
+          <Avatar>
+            <AvatarImage src="" alt="@shadcn" />
+            <AvatarFallback>DN</AvatarFallback>
+          </Avatar>
         </div>
       </div>
     </div>
