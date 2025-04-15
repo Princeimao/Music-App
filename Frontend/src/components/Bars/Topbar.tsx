@@ -1,11 +1,13 @@
+import axios from "axios";
 import { House, Search } from "lucide-react";
 import { useEffect, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
 import { useLocation, useNavigate } from "react-router-dom";
 
 import { logoutUser } from "@/apis/authentication.api";
 import { RootState } from "@/context/store/store";
-import { useDispatch, useSelector } from "react-redux";
 import logo from "../../Logo.svg";
+import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { Button } from "../ui/button";
 import {
   DropdownMenu,
@@ -39,7 +41,10 @@ const Topbar = () => {
 
   useEffect(() => {
     if (debouncedInput) {
-      console.log("Searching for:", debouncedInput);
+      const response = axios.get(
+        `http://localhost:/api/spotify/searchSuggestion?searchTerm=${debouncedInput}`
+      );
+      console.log("here", response);
     }
   }, [debouncedInput]);
 
@@ -78,11 +83,10 @@ const Topbar = () => {
               className="bg-[#2f2f2faf] w-12 h-12 rounded-full"
               asChild
             >
-              <img
-                src={user.profile_picture}
-                alt="profile_pic"
-                className="rounded-full w-12 h-12"
-              />
+              <Avatar>
+                <AvatarImage src="" alt="@shadcn" />
+                <AvatarFallback>DN</AvatarFallback>
+              </Avatar>
             </DropdownMenuTrigger>
             <DropdownMenuContent className="bg-[#2F2F2F] text-white border-none w-[21vh]">
               <DropdownMenuLabel>{user.name}</DropdownMenuLabel>

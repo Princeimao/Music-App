@@ -5,6 +5,7 @@ import Layout from "./pages/layout/layout";
 import LoginPage from "./pages/Login";
 import Playlist from "./pages/Playlist";
 import RegisterPage from "./pages/Register";
+import SearchSuggestion from "./pages/SearchSuggestion";
 
 function App() {
   return (
@@ -16,7 +17,10 @@ function App() {
         <Route element={<Layout />}>
           <Route path="/" element={<Home />} />
           <Route path="/playlist/:spotifyId" element={<Playlist />} />
-          <Route path="/search/:searchParameter" element={<Playlist />} />
+          <Route
+            path="/search/:searchParameter"
+            element={<SearchSuggestion />}
+          />
         </Route>
       </Routes>
     </BrowserRouter>
