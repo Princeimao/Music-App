@@ -1,13 +1,23 @@
 import axios from "axios";
 import { Response } from "express";
 import querystring from "querystring";
+import { z } from "zod";
+
 import { IUserRequest } from "../middlewares/auth.middleware";
 import userModel from "../model/user.model";
+
+const SearchSchemaValidation = z.object({
+  searchTerm: z.string().min(1, "Search term is required"),
+  type: z.enum(["artist", "album", "track", "playlist"]).optional(),
+});
 
 export const searchSuggestion = async (req: IUserRequest, res: Response) => {
   try {
     const userId = req.user?.userId;
-    const { searchTerm, type } = req.body;
+    const { searchTerm, type = "track,artist" } = SearchSchemaValidation.parse(
+      req.query
+    );
+
     const user = await userModel
       .findById(userId)
       .select("spotify_access_token")
@@ -29,12 +39,14 @@ export const searchSuggestion = async (req: IUserRequest, res: Response) => {
       return;
     }
 
+    const query = querystring.stringify({
+      q: searchTerm,
+      type: type,
+      limit: 5,
+    });
+
     const response = await axios.get(
-      `https://api.spotify.com/v1/search?q=${querystring.stringify({
-        q: searchTerm,
-        type: type,
-        limit: 10,
-      })}`,
+      `https://api.spotify.com/v1/search?q=${query}`,
       {
         headers: {
           Authorization: `Bearer ${user.spotify_access_token}`,
@@ -46,11 +58,11 @@ export const searchSuggestion = async (req: IUserRequest, res: Response) => {
       success: true,
       message: "Search suggestion fetched successfully",
       searchSuggestion: {
-        artists: response.data?.artists?.items,
-        albums: response.data?.albums?.items,
-        tracks: response.data?.tracks?.items,
-        playlists: response.data?.playlists?.items,
-        alreadyPlayed: user.songHistory,
+        artists: response.data?.artists?.items || [],
+        albums: response.data?.albums?.items || [],
+        tracks: response.data?.tracks?.items || [],
+        playlists: response.data?.playlists?.items || [],
+        alreadyPlayed: user.songHistory || [],
       },
     });
   } catch (error) {

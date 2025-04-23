@@ -16,11 +16,12 @@ function App() {
 
         <Route element={<Layout />}>
           <Route path="/" element={<Home />} />
-          <Route path="/playlist/:spotifyId" element={<Playlist />} />
+          <Route path="/playlist/:playlistId" element={<Playlist />} />
           <Route
             path="/search/:searchParameter"
             element={<SearchSuggestion />}
           />
+          <Route path="/artist/:artistId" element={<Playlist />} />
         </Route>
       </Routes>
     </BrowserRouter>

@@ -5,8 +5,6 @@ import {
   Carousel,
   CarouselContent,
   CarouselItem,
-  CarouselNext,
-  CarouselPrevious,
 } from "@/components/ui/carousel";
 
 const Home = () => {
@@ -34,8 +32,6 @@ const Home = () => {
             </CarouselItem>
           ))}
         </CarouselContent>
-        <CarouselPrevious className="group-hover:opacity-100 opacity-0 ml-8 bg-[#2F2F2F] border-none" />
-        <CarouselNext className="group-hover:opacity-100 opacity-0 mr-8 bg-[#2F2F2F] border-none" />
       </Carousel>
     </div>
   );

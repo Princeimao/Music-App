@@ -1,11 +1,11 @@
-import axios from "axios";
 import { House, Search } from "lucide-react";
-import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useLocation, useNavigate } from "react-router-dom";
 
 import { logoutUser } from "@/apis/authentication.api";
+import { setSearchTerm } from "@/context/searchSlich";
 import { RootState } from "@/context/store/store";
+import { useEffect, useState } from "react";
 import logo from "../../Logo.svg";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { Button } from "../ui/button";
@@ -21,32 +21,17 @@ import { Input } from "../ui/input";
 
 const Topbar = () => {
   const navigate = useNavigate();
+  const dispatch = useDispatch();
   const { pathname } = useLocation();
   const user = useSelector((state: RootState) => state.user);
-  const dispatch = useDispatch();
-  const [input, setInput] = useState<string>("");
-  const [debouncedInput, setDebouncedInput] = useState<string>("");
+  const [searchInput, setSearchInput] = useState("");
 
   useEffect(() => {
-    if (input !== "") {
-      navigate(`/search/${encodeURIComponent(input)}`);
+    if (searchInput !== "") {
+      navigate(`/search/${encodeURIComponent(searchInput)}`);
+      dispatch(setSearchTerm({ searchTerm: searchInput }));
     }
-
-    const timeout = setTimeout(() => {
-      setDebouncedInput(input.trim());
-    }, 400);
-
-    return () => clearTimeout(timeout);
-  }, [input, navigate]);
-
-  useEffect(() => {
-    if (debouncedInput) {
-      const response = axios.get(
-        `http://localhost:/api/spotify/searchSuggestion?searchTerm=${debouncedInput}`
-      );
-      console.log("here", response);
-    }
-  }, [debouncedInput]);
+  }, [searchInput, navigate, dispatch]);
 
   return (
     <div className="h-18 w-full flex items-center px-8 justify-between">
@@ -69,8 +54,8 @@ const Topbar = () => {
               className="border-none bg-transparent placeholder:text-white font-[Lato] text-[2.1vh] text-white placeholder:font-semibold placeholder:text-[2.1vh]"
               type="text"
               placeholder="What do you want to play?"
-              onChange={(e) => setInput(e.target.value)}
-              value={input}
+              onChange={(e) => setSearchInput(e.target.value)}
+              value={searchInput}
             />
           </div>
         </div>

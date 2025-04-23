@@ -19,13 +19,9 @@ const PlaylistCard = ({ count = 0 }) => {
         Wavy
       </h4>
 
-      <h4 className="text-sm md:text-base font-semibold hover:underline">
-        Mar 17, 2023
-      </h4>
+      <h4 className="text-sm md:text-base font-semibold">Mar 17, 2023</h4>
 
-      <h4 className="text-sm md:text-base font-semibold hover:underline ml-auto">
-        2:42
-      </h4>
+      <h4 className="text-sm md:text-base font-semibold ml-auto">2:42</h4>
     </div>
   );
 };
