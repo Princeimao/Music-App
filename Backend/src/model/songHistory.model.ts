@@ -11,10 +11,12 @@ const SongHistorySchema = new mongoose.Schema(
       type: String,
       required: true,
     },
-    artist: {
-      type: String,
-      required: true,
-    },
+    artist: [
+      {
+        type: String,
+        required: true,
+      },
+    ],
     album: {
       type: String,
     },

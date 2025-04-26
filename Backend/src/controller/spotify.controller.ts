@@ -5,6 +5,7 @@ import { z } from "zod";
 
 import { IUserRequest } from "../middlewares/auth.middleware";
 import userModel from "../model/user.model";
+import { cleanSpotifyArtists, cleanSpotifyTracks } from "../utils/cleaner";
 
 const SearchSchemaValidation = z.object({
   searchTerm: z.string().min(1, "Search term is required"),
@@ -54,13 +55,16 @@ export const searchSuggestion = async (req: IUserRequest, res: Response) => {
       }
     );
 
+    const tracks = cleanSpotifyTracks(response.data?.tracks?.items || []);
+    const artists = cleanSpotifyArtists(response.data?.artists?.items || []);
+
     res.status(200).json({
       success: true,
       message: "Search suggestion fetched successfully",
       searchSuggestion: {
-        artists: response.data?.artists?.items || [],
+        artists: artists,
         albums: response.data?.albums?.items || [],
-        tracks: response.data?.tracks?.items || [],
+        tracks: tracks,
         playlists: response.data?.playlists?.items || [],
         alreadyPlayed: user.songHistory || [],
       },
